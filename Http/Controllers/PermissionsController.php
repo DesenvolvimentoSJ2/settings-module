@@ -5,8 +5,9 @@ namespace Modules\Settings\Http\Controllers;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Spatie\Permission\Models\Permission;
 
-class SettingsController extends Controller
+class PermissionsController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -34,6 +35,19 @@ class SettingsController extends Controller
     public function store(Request $request)
     {
         //
+        // dd($request->all());
+
+        // dd(strtolower(str_replace(' ', '_', $request->input('permissions_parameter'))));
+
+        Permission::create([
+            'name' => strtolower(str_replace(' ', '_', $request->input('permissions_parameter'))),
+            // 'guard_name' => '',
+            'description' => $request->input('permissions_description'),
+            'route_id' => $request->input('permissions_algumaCoisa'),
+            'system_id' => $request->input('permissions_id_system')
+        ]);
+
+        return back();
     }
 
     /**

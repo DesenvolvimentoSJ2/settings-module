@@ -16,6 +16,11 @@ class Submenu extends Model
     protected $fillable = [
         'menu_id',
         'title',
-        'route',
+        'route_id',
     ];
+
+    public function route()
+    {
+        return $this->hasOne(Routes::class, 'id', 'route_id');
+    }
 }

@@ -11,7 +11,7 @@
                         Overview
                     </div>
                     <h2 class="page-title">
-                        Adicionar novo sistema
+                        Adicionar nova regra
                     </h2>
                 </div>
 
@@ -21,7 +21,7 @@
 
     {{-- page body --}}
 
-    <form action="{{ route('modules.store') }}" method="POST" class="col-6 mx-auto" enctype="multipart/form-data">
+    <form action="{{ route('roles.store') }}" method="POST" class="col-6 mx-auto">
         @csrf
 
         <div class="row">
@@ -39,7 +39,7 @@
             @endforeach
         </div>
 
-        <button type="submit" class="btn btn-primary">Salvar permissão</button>
+        <button type="submit" class="btn btn-primary">Add regra</button>
 
     </form>
 @endsection

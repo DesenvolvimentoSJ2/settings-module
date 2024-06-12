@@ -3,10 +3,14 @@
 namespace Modules\Settings\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Models\UserModules;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request as FacadesRequest;
 use Modules\Settings\Entities\Menu;
 use Modules\Settings\Entities\Systems;
+use Spatie\Permission\Models\Role;
 
 class UsersController extends Controller
 {
@@ -54,6 +58,9 @@ class UsersController extends Controller
     public function index()
     {
         //
+        $this->data['users'] = User::all();
+
+        return view('settings::users.index', $this->data);
     }
 
     /**
@@ -95,7 +102,7 @@ class UsersController extends Controller
                         'component' => 'input.input',
                         'name' => 'user_email',
                         'title' => 'Email',
-                        'type' => 'email',
+                        'type' => 'text',
                         'placeholder' => 'Email...',
                         'class' => 'mb-3',
                         'required' => true
@@ -115,7 +122,7 @@ class UsersController extends Controller
             ],
         ];
 
-        return view('pages.users.create', $this->data);
+        return view('users.create', $this->data);
     }
 
     /**
@@ -148,9 +155,61 @@ class UsersController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(User $user)
     {
         //
+        $this->data['user'] = $user;
+
+        foreach (Role::all() as $index => $role) {
+
+            $role_list[$index] = [
+                'value' => $role->name,
+                'text' => $role->name
+            ];
+
+        }
+
+        $system_list = $user->with('my_systems.system')->first();
+
+        // dd($system_list);
+
+        $this->data['user_systems'] = $system_list->my_systems;
+
+        foreach (Systems::all() as $index => $system) {
+            $list_systems[$index] = [
+                'value' => $system->id,
+                'path_image' => asset('storage/' . $system->image_system_path),
+                'label' => $system->name
+            ];
+        }
+
+        $this->data['form'] = [
+            [
+                'size' => 'col-12',
+                'item' => [
+                    [
+                        'title' => 'Sistemas',
+                        'component' => 'checkbox.image-check',
+                        'name' => 'module_systems[]',
+                        'option_list' => $list_systems
+                    ]
+                ]
+            ],
+
+            [
+                'size' => 'col-12',
+                'item' => [
+                    [
+                        'component' => 'select.select-with-groups',
+                        'name' => 'role',
+                        'title' => 'Selecione o grupo de permissão',
+                        'group_list' => isset($role_list) ? $role_list : []
+                    ]
+                ]
+            ]
+        ];
+
+        return view('settings::users.edit', $this->data);
     }
 
     /**
@@ -160,9 +219,37 @@ class UsersController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, User $user)
     {
         //
+        // dd($request->all());
+        // dd($user);
+
+        // $user_id = Auth::user()->id;
+
+        if ($request->module_systems) {
+            foreach ($request->module_systems as $item) {
+                $exist = UserModules::where('module_id' , $item)->where('user_id', $user->id)->first();
+
+                if (!$exist) {
+                    UserModules::create([
+                        'module_id' => $item,
+                        'user_id' => $user->id
+                    ]);
+
+                    // echo 'entrou';
+                }
+
+            }
+        }
+
+        if ($request->role) {
+            if (!$user->hasRole($request->role)) {
+                $user->assignRole($request->role);
+            }
+        }
+
+        return back();
     }
 
     /**

@@ -5,6 +5,7 @@ namespace Modules\Settings\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Modules\Settings\Entities\Menu;
+use Modules\Settings\Entities\Routes;
 use Modules\Settings\Entities\Submenu;
 
 class MenuController extends Controller
@@ -42,10 +43,15 @@ class MenuController extends Controller
         // dd($request->all());
 
         if ($request->input('menu_type') == 'menu') {
+
+            $route = Routes::create([
+                'name' => strtolower($request->input('menu_route'))
+            ]);
+
             Menu::create([
                 'system_id' => $request->input('menu_id_system'),
                 'title' => ucfirst($request->input('menu_title')),
-                'route' => strtolower($request->input('menu_route')),
+                'route_id' => $route->id,
                 'icon' => strtolower($request->input('menu_icon')),
                 'type' => $request->input('menu_type')
             ]);
@@ -59,10 +65,14 @@ class MenuController extends Controller
 
             $submenu_list = [];
             foreach ($request->submenu as $submenu) {
+                $route = Routes::create([
+                    'name' => strtolower($submenu['route'])
+                ]);
+
                 $submenu_list[] = [
                     'menu_id' => $menu->id,
                     'title' => ucfirst($submenu['title']),
-                    'route' => strtolower($submenu['route'])
+                    'route_id' => $route->id
                 ];
             }
 

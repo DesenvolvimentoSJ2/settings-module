@@ -14,7 +14,7 @@ class Menu extends Model
     protected $fillable = [
         'system_id',
         'title',
-        'route',
+        'route_id',
         'icon',
         'type'
     ];
@@ -22,5 +22,10 @@ class Menu extends Model
     public function menu_list()
     {
         return $this->hasMany(Submenu::class, 'menu_id');
+    }
+
+    public function route()
+    {
+        return $this->hasOne(Routes::class, 'id', 'route_id');
     }
 }

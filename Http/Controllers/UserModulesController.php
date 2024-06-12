@@ -2,11 +2,14 @@
 
 namespace Modules\Settings\Http\Controllers;
 
+use App\Models\User;
+use App\Models\UserModules;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Modules\Settings\Entities\Systems;
 
-class SettingsController extends Controller
+class UserModulesController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -72,8 +75,27 @@ class SettingsController extends Controller
      * @param int $id
      * @return Renderable
      */
-    public function destroy($id)
+    public function destroy(User $user, Systems $system)
     {
         //
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     * @param int $id
+     * @return Renderable
+     */
+    public function remove(UserModules $user)
+    {
+        //
+
+        // dd($user);
+
+        $user->delete();
+
+        // dd(UserModules::where('user_id', $user->id)->where('module_id', $system->id)->first());
+
+        return back();
+
     }
 }

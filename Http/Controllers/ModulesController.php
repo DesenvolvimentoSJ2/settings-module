@@ -5,11 +5,14 @@ namespace Modules\Settings\Http\Controllers;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+// use Illuminate\Session\Store;
 use Illuminate\Support\Facades\Request as FacadesRequest;
+use Illuminate\Support\Facades\Storage;
 use Modules\Settings\Entities\Menu;
 use Modules\Settings\Entities\Systems;
 use Modules\Settings\Http\Repositories\SystemRepository;
 use Modules\Settings\Http\Requests\CreateSystemsFormRequest;
+use Spatie\Permission\Models\Permission;
 
 class ModulesController extends Controller
 {
@@ -18,35 +21,8 @@ class ModulesController extends Controller
     public function __construct(
         private SystemRepository $repository
     ) {
-        // $this->data['menu'] = [
-        //     // [
-        //     //     'route' => 'systems.index',
-        //     //     'title' => 'Selecione',
-        //     //     'is_active' => !FacadesRequest::is('management*') && !FacadesRequest::is('users*') ? true : false,
-        //     //     'icon' => 'ti-pointer'
-        //     // ],
-        //     [
-        //         'route' => null,
-        //         'title' => 'Módulos',
-        //         'is_active' => FacadesRequest::is('modules*') ? true : false,
-        //         'icon' => 'ti-folders',
-        //         'menu_list' => [
-        //             ['route' => 'modules.index', 'title' => 'Módulos'],
-        //             ['route' => 'modules.create', 'title' => 'Novo Modulo'],
-        //         ]
-        //     ],
-        //     [
-        //         'route' => null,
-        //         'title' => 'Usuários',
-        //         'is_active' => FacadesRequest::is('users*') ? true : false,
-        //         'icon' => 'ti-users',
-        //         'menu_list' => [
-        //             ['route' => 'users.create', 'title' => 'Novo Usuário'],
-        //         ]
-        //     ],
-        // ];
 
-        $this->data['menu'] = Menu::where('system_id', '9c36f1e1-7980-4f9c-8d25-14c8acbe385a')->with('menu_list')->get();
+        // dd($this->data['menu']);
     }
 
     /**
@@ -131,6 +107,8 @@ class ModulesController extends Controller
 
         $system = $this->repository->add($request);
 
+        // dd($system);
+
         return to_route('modules.index');
     }
 
@@ -144,6 +122,39 @@ class ModulesController extends Controller
     {
         //
 
+        $lists = [];
+
+        foreach ($module->menu()->with('menu_list')->get() as $index => $menu) {
+
+            if ($menu->type == 'menu') {
+                $lists[$index] = [
+                    'value' => $menu->route_id,
+                    'text' => $menu->title
+                ];
+            } else {
+                $sub = [];
+                foreach ($menu->menu_list as $i => $list) {
+                    $sub[$i] = [
+                        'value' => $list->route_id,
+                        'text' => $list->title
+                    ];
+                }
+
+                $lists[$index] = [
+                    'label' => $menu->title,
+                    'options' => $sub
+                ];
+            }
+        }
+
+        // dd($module->permissions);
+        // dd($module->menu()->with('menu_list')->get());
+
+        $this->data['menu'] = $module->menu()->with('menu_list')->get();
+
+        // dd($this->data['menu']);
+
+        $this->data['permissions'] = $module->permissions;
         $this->data['management'] = $module;
         $this->data['form_permission'] = [
             [
@@ -186,6 +197,17 @@ class ModulesController extends Controller
                     ]
                 ]
             ],
+            [
+                'size' => 'col-12',
+                'item' => [
+                    [
+                        'component' => 'select.select-with-groups',
+                        'name' => 'permissions_algumaCoisa',
+                        'title' => 'Selecione o menu',
+                        'group_list' => $lists
+                    ]
+                ]
+            ]
         ];
         $this->data['form_menu'] = [
             [
@@ -303,6 +325,51 @@ class ModulesController extends Controller
             ],
         ];
 
+        $this->data['form_edit'] = [
+            [
+                'size' => 'col-12',
+                'item' => [
+                    [
+                        'component' => 'input.input',
+                        'name' => 'module_name',
+                        'title' => 'Nome do modulo',
+                        'type' => 'text',
+                        'placeholder' => 'Nome...',
+                        'class' => 'mb-3',
+                        'required' => true,
+                        'value' => $module->name
+                    ]
+                ]
+            ],
+            [
+                'size' => 'col-12',
+                'item' => [
+                    [
+                        'component' => 'input.input',
+                        'name' => 'module_route',
+                        'title' => 'Principal rota do modulo',
+                        'type' => 'text',
+                        'placeholder' => 'Rota...',
+                        'class' => 'mb-3',
+                        'required' => true,
+                        'value' => $module->route
+                    ]
+                ]
+            ],
+            [
+                'size' => 'col-12',
+                'item' => [
+                    [
+                        'component' => 'input.input',
+                        'name' => 'module_image',
+                        'title' => 'Imagem do modulo',
+                        'type' => 'file',
+                        'class' => 'mb-3'
+                    ]
+                ]
+            ]
+        ];
+
         // dd($management->menu()->with('submenu')->get());
 
         return view('settings::module.show', $this->data);
@@ -324,9 +391,13 @@ class ModulesController extends Controller
      * @param int $id
      * @return Renderable
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Systems $module)
     {
         //
+
+        $system = $this->repository->update($request, $module);
+
+        return to_route('modules.show', $module->id);
     }
 
     /**
